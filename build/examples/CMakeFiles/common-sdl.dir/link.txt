@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcommon-sdl.a "CMakeFiles/common-sdl.dir/common-sdl.cpp.o"
+/usr/bin/ranlib libcommon-sdl.a

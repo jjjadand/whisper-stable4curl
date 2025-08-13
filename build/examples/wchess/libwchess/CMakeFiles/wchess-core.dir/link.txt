@@ -1,0 +1,2 @@
+/usr/bin/ar qc libwchess-core.a "CMakeFiles/wchess-core.dir/WChess.cpp.o" "CMakeFiles/wchess-core.dir/Chessboard.cpp.o"
+/usr/bin/ranlib libwchess-core.a
