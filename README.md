@@ -1,4 +1,6 @@
 ## Quickly start
+**Including voice activation, automatic input termination detection, stream output, WAV output, and automatic device recognition.**
+
 recommend option to compile:
 ```bash
 # build the project
