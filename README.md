@@ -10,6 +10,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64${LD_LIBRARY_PATH:+:${LD_LIBRAR
 
 ```bash
 sudo apt install libsdl2-dev
+sudo apt install nlohmann-json3-dev
 sudo apt-get install libjsoncpp-dev
 ```
 
