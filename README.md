@@ -31,12 +31,12 @@ cmake --build build -j --config Release
 
 Real-time audio input example:
 ```bash
-./build/bin/whisper-stream -m ./models/ggml-base.en-q5_1.bin -t 8 --step 600 --length 5000 -vth 5 --keep 1200
+sudo ./build/bin/whisper-stream -m ./models/ggml-base.en-q5_1.bin -t 8 --step 600 --length 5000 -vth 5 --keep 1200
 ```
 
 or:
 ```bash
-./build/bin/whisper-stream -m ./models/ggml-base.en-q5_1.bin -t 8 --step 0 --length 7000 -vth 0.7 --keep 1200
+sudo ./build/bin/whisper-stream -m ./models/ggml-base.en-q5_1.bin -t 8 --step 0 --length 7000 -vth 0.7 --keep 1200
 ```
 
 ---
