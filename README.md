@@ -2,6 +2,12 @@
 **Including voice activation, automatic input termination detection, stream output, WAV output, and automatic device recognition.**
 
 recommend option to compile:
+
+```bash
+export PATH=/usr/local/cuda-12.6/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+```
+
 ```bash
 # build the project
 cmake -B build -DGGML_CUDA=1 -DGGML_CUDA=1
