@@ -1,6 +1,13 @@
 ## Quickly start
 **Including voice activation, automatic input termination detection, stream output, WAV output, and automatic device recognition.**
 
+download model:
+
+```bash
+cd 
+../models/download-ggml-model.sh base.en-q5_1
+```
+
 recommend option to compile:
 
 ```bash
