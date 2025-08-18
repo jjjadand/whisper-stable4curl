@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64${LD_LIBRARY_PATH:+:${LD_LIBRAR
 
 ```bash
 # build the project
-cmake -B build -DGGML_CUDA=1 -DGGML_CUDA=1
+cmake -B build -DGGML_CUDA=1 -WHISPER_SDL2=ON
 cmake --build build -j --config Release
 
 # transcribe an audio file
