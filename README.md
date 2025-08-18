@@ -4,7 +4,6 @@
 download model:
 
 ```bash
-cd 
 ../models/download-ggml-model.sh base.en-q5_1
 ```
 
