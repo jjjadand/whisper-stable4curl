@@ -4,7 +4,7 @@
 download model:
 
 ```bash
-../models/download-ggml-model.sh base.en-q5_1
+./models/download-ggml-model.sh base.en-q5_1
 ```
 
 recommend option to compile:
