@@ -7,11 +7,14 @@
 #include <cstdint>
 #include <vector>
 #include <mutex>
-
+#include <thread>
+#include <regex>
 //
 // SDL Audio capture
 //
 // 
+
+
 class audio_async {
 public:
     audio_async(int len_ms);
@@ -31,6 +34,12 @@ public:
     // get audio data from the circular buffer
     void get(int ms, std::vector<float> & audio);
 
+    //doa trigger
+    void trigger_doa();
+    float get_fourth_deg();
+    std::atomic<float> m_latest_doa_deg = 1;
+    float m_doa_deg = -1;
+
 private:
     SDL_AudioDeviceID m_dev_id_in = 0;
 
@@ -43,7 +52,10 @@ private:
     std::vector<float> m_audio;
     size_t             m_audio_pos = 0;
     size_t             m_audio_len = 0;
+    int trigger_doa_cnt = 0;
+
 };
 
 // Return false if need to quit
 bool sdl_poll_events();
+

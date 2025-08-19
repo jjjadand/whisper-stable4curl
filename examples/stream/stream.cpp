@@ -8,6 +8,7 @@
 #include "whisper.h"
 
 #include <chrono>
+#include <regex>
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -25,6 +26,10 @@ static StrPtr latest_result_ptr;
 
 std::mutex infer_mtx;
 std::string target_hw = "reSpeaker"; // default target hardware, can be overridden by command-line argument
+float doa_deg = -1; // DOA_value
+                    //doa run in callback function of common-sdl.cpp
+
+
 
 // command-line parameters
 struct whisper_params {
@@ -166,6 +171,12 @@ void start_server() {
 
         json j;
         j["text"] = text;  // 以后要扩展字段就继续加
+
+        if(doa_deg > 0){
+            j["doa"] = doa_deg;
+        }else{
+            j["doa"] = nullptr;
+        }
         res.set_content(j.dump(), "application/json; charset=UTF-8");
     });
 
@@ -173,7 +184,59 @@ void start_server() {
     svr.listen("0.0.0.0", 8080);
 }
 
+// float get_fourth_deg() {
+//     FILE* pipe = popen("sudo ./build/bin/xvf_host AEC_AZIMUTH_VALUES", "r");
+//     if (!pipe) {
+//         std::cerr << "Failed to run xvf_host\n";
+//         return -1;
+//     }
 
+//     char buffer[256];
+//     std::string result;
+
+//     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+//         result += buffer;
+//     }
+//     pclose(pipe);
+
+//     std::regex deg_pattern(R"(\(([\d\.]+) deg\))");
+//     std::smatch match;
+//     std::vector<float> deg_values;
+
+//     auto begin = result.cbegin();
+//     auto end = result.cend();
+
+//     while (std::regex_search(begin, end, match, deg_pattern)) {
+//         deg_values.push_back(std::stof(match[1]));
+//         begin = match.suffix().first;
+//     }
+
+//     if (deg_values.size() >= 4) {
+//         return deg_values[3];  // 第 4 个 deg
+//     } else {
+//         std::cerr << "Less than 4 deg values found.\n";
+//         return -1;
+//     }
+// }
+
+// void start_doa() {
+//     while (true) {
+//         float doa_deg = get_fourth_deg();
+//         if (doa_deg >= 0) {
+//             latest_doa_deg.store(doa_deg, std::memory_order_release);
+//             std::cout << "[DOA] Fourth direction: " << doa_deg << " deg" << std::endl;
+//         }
+//         std::this_thread::sleep_for(std::chrono::milliseconds(300));
+//     }
+// }
+
+// void trigger_doa() {
+//         float doa_deg = get_fourth_deg();
+//         if (doa_deg >= 0) {
+//             latest_doa_deg.store(doa_deg, std::memory_order_release);
+//             std::cout << "[DOA] Fourth direction: " << doa_deg << " deg" << std::endl;
+//         }
+// }
 
 int main(int argc, char ** argv) {
     ggml_backend_load_all();
@@ -232,6 +295,7 @@ int main(int argc, char ** argv) {
         StrPtr{},  // 空的 shared_ptr，相当于 nullptr
         std::memory_order_release
     );
+
 
     // whisper init
     if (params.language != "auto" && whisper_lang_id(params.language.c_str()) == -1){
@@ -384,6 +448,10 @@ int main(int argc, char ** argv) {
 
             if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, params.vad_thold, params.freq_thold, false)) {
                 audio.get(params.length_ms, pcmf32);
+                doa_deg = audio.m_doa_deg;
+                std::cout << "[DOA] Fourth direction: " << doa_deg << " deg" << std::endl;
+                //trigger_doa(); //vad ,record the DoA
+
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -493,7 +561,7 @@ int main(int argc, char ** argv) {
             }
 
             ++n_iter;
-
+            //printf("prompt_tokens.size() = %ld\n", prompt_tokens.size());
             if (!use_vad && (n_iter % n_new_line) == 0) {
                 printf("\n");
 
@@ -501,6 +569,7 @@ int main(int argc, char ** argv) {
                 pcmf32_old = std::vector<float>(pcmf32.end() - n_samples_keep, pcmf32.end());
 
                 // Add tokens of the last full length segment as the prompt
+                
                 if (!params.no_context) {
                     prompt_tokens.clear();
 

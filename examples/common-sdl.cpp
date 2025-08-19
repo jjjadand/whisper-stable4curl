@@ -1,6 +1,7 @@
 #include "common-sdl.h"
 
 #include <cstdio>
+#include <iostream>
 
 audio_async::audio_async(int len_ms) {
     m_len_ms = len_ms;
@@ -27,11 +28,12 @@ bool audio_async::init(int capture_id, int sample_rate, std::string target_hw) {
     {
         int nDevices = SDL_GetNumAudioDevices(SDL_TRUE);
         fprintf(stderr, "%s: found %d capture devices:\n", __func__, nDevices);
-        for (int i = 0; i < nDevices; i++) {
-            fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, SDL_GetAudioDeviceName(i, SDL_TRUE));
-        }
+        // for (int i = 0; i < nDevices; i++) {
+        //     fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, SDL_GetAudioDeviceName(i, SDL_TRUE));
+        // }
         for (int i = 0; i < nDevices; i++) {
             const char* name = SDL_GetAudioDeviceName(i, SDL_TRUE);
+            fprintf(stderr, "%s:    - Capture device #%d: '%s'\n", __func__, i, name);
             if (!name) continue;
             printf("[%d] %s\n", i, name);
             if (strstr(name, target_hw.c_str())) {
@@ -52,6 +54,7 @@ bool audio_async::init(int capture_id, int sample_rate, std::string target_hw) {
     capture_spec_requested.channels = 1;
     capture_spec_requested.samples  = 1024;
     capture_spec_requested.callback = [](void * userdata, uint8_t * stream, int len) {
+
         audio_async * audio = (audio_async *) userdata;
         audio->callback(stream, len);
     };
@@ -214,6 +217,14 @@ void audio_async::callback(uint8_t * stream, int len) {
         return;
     }
 
+    //rigger DoA
+    trigger_doa_cnt++;
+    if(trigger_doa_cnt > 10){
+        trigger_doa_cnt = 0;
+        trigger_doa();
+    }
+    
+
     size_t n_samples = len / sizeof(float);
 
     if (n_samples > m_audio.size()) {
@@ -283,6 +294,53 @@ void audio_async::get(int ms, std::vector<float> & result) {
     }
 }
 
+
+float audio_async::get_fourth_deg() {
+    FILE* pipe = popen("sudo ./build/bin/xvf_host AEC_AZIMUTH_VALUES", "r");
+    if (!pipe) {
+        std::cerr << "Failed to run xvf_host\n";
+        return -1;
+    }
+
+    char buffer[256];
+    std::string result;
+
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    std::regex deg_pattern(R"(\(([\d\.]+) deg\))");
+    std::smatch match;
+    std::vector<float> deg_values;
+
+    auto begin = result.cbegin();
+    auto end = result.cend();
+
+    while (std::regex_search(begin, end, match, deg_pattern)) {
+        deg_values.push_back(std::stof(match[1]));
+        begin = match.suffix().first;
+    }
+
+    if (deg_values.size() >= 4) {
+        return deg_values[3];  // 第 4 个 deg
+    } else {
+        std::cerr << "Less than 4 deg values found.\n";
+        return -1;
+    }
+}
+
+
+void audio_async::trigger_doa() {
+        m_doa_deg = get_fourth_deg();
+        if (m_doa_deg >= 0) {
+            m_latest_doa_deg.store(m_doa_deg, std::memory_order_release);
+            //std::cout << "[DOA] Fourth direction: " << doa_deg << " deg" << std::endl;
+        }
+}
+
+
+
 bool sdl_poll_events() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -298,3 +356,5 @@ bool sdl_poll_events() {
 
     return true;
 }
+
+
